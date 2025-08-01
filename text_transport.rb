@@ -59,8 +59,7 @@ class TextTransport
 
       if data.is_a?(Hash) && data.key?('tools')
         log_info("Detected UTCP manual in '#{file_path}'.")
-        # Assuming UtcpManual accepts keyword args from the hash
-        utcp_manual = UtcpManual.new(**symbolize_keys_recursive(data))
+        utcp_manual = UtcpManual.model_validate(symbolize_keys_recursive(data))
       elsif data.is_a?(Hash) && (data.key?('openapi') || data.key?('swagger') || data.key?('paths'))
         log_info("Assuming OpenAPI spec in '#{file_path}'. Converting to UTCP manual.")
         spec_url = file_path.realpath.to_uri
