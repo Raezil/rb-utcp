@@ -277,4 +277,86 @@ class GraphQLProvider < BaseProvider
 end
 
 class TCPProvider < BaseProvider
-  attr_read_
+  attr_reader :host, :port, :auth, :headers
+
+  def initialize(provider_type: 'tcp', host:, port:, auth: nil, headers: nil, name: nil, **)
+    super(name: name, provider_type: provider_type)
+    @host = host
+    @port = port
+    @auth = auth && Auth.from_hash(auth)
+    @headers = headers
+    validate!
+  end
+
+  private
+
+  def validate!
+    raise ValidationError, 'host must be provided' if @host.to_s.strip.empty?
+    unless @port.is_a?(Integer) && @port.between?(1, 65_535)
+      raise ValidationError, 'port must be an integer between 1 and 65535'
+    end
+  end
+end
+
+class UDPProvider < BaseProvider
+  attr_reader :host, :port, :auth, :headers
+
+  def initialize(provider_type: 'udp', host:, port:, auth: nil, headers: nil, name: nil, **)
+    super(name: name, provider_type: provider_type)
+    @host = host
+    @port = port
+    @auth = auth && Auth.from_hash(auth)
+    @headers = headers
+    validate!
+  end
+
+  private
+
+  def validate!
+    raise ValidationError, 'host must be provided' if @host.to_s.strip.empty?
+    unless @port.is_a?(Integer) && @port.between?(1, 65_535)
+      raise ValidationError, 'port must be an integer between 1 and 65535'
+    end
+  end
+end
+
+class WebRTCProvider < BaseProvider
+  attr_reader :url, :auth, :headers
+
+  def initialize(provider_type: 'webrtc', url:, auth: nil, headers: nil, name: nil, **)
+    super(name: name, provider_type: provider_type)
+    @url = url
+    @auth = auth && Auth.from_hash(auth)
+    @headers = headers
+    validate!
+  end
+
+  private
+
+  def validate!
+    raise ValidationError, 'url must be a valid URI' unless valid_uri?(@url)
+  end
+
+  def valid_uri?(u)
+    !!(URI.parse(u) rescue false)
+  end
+end
+
+class MCPProvider < BaseProvider
+  attr_reader :config, :auth
+
+  def initialize(provider_type: 'mcp', config:, auth: nil, name: nil, **)
+    super(name: name, provider_type: provider_type)
+    @config = config
+    @auth = auth && Auth.from_hash(auth)
+  end
+end
+
+class TextProvider < BaseProvider
+  attr_reader :file_path
+
+  def initialize(provider_type: 'text', file_path:, name: nil, **)
+    super(name: name, provider_type: provider_type)
+    @file_path = file_path
+  end
+end

@@ -2,6 +2,13 @@ require 'json'
 require 'pathname'
 require 'async'
 require_relative 'models'
+require_relative 'http_transport'
+require_relative 'cli_transport'
+require_relative 'sse_transport'
+require_relative 'streamable_transport'
+require_relative 'mcp_transport'
+require_relative 'text_transport'
+require_relative 'graphql_transport'
 
 # Custom error types
 class UtcpVariableNotFound < StandardError; end
