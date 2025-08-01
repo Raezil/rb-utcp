@@ -56,7 +56,34 @@ class GraphQLClientTransport
     token_response['access_token']
   end
 
-  def register_tool_provider(_manual_provider)
+  def register_tool_provider(manual_provider)
+    enforce_https_or_localhost!(manual_provider.url)
+    headers = (manual_provider.headers || {}).dup
+    if manual_provider.auth.is_a?(OAuth2Auth)
+      token = handle_oauth2(manual_provider.auth)
+      headers['Authorization'] = "Bearer #{token}"
+    end
+
+    uri = URI.parse(manual_provider.url)
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.use_ssl = uri.scheme == 'https'
+
+    begin
+      req = Net::HTTP::Get.new(uri)
+      req.initialize_http_header(headers)
+      resp = http.request(req)
+      unless resp.is_a?(Net::HTTPSuccess)
+        @log.call("Error retrieving manual from '#{manual_provider.name}': #{resp.code} #{resp.body}", error: true)
+        return []
+      end
+      data = JSON.parse(resp.body)
+      if data.is_a?(Hash) && data['tools']
+        utcp_manual = UtcpManual.model_validate(data)
+        return utcp_manual.tools
+      end
+    rescue StandardError => e
+      @log.call("Failed to discover tools from '#{manual_provider.name}': #{e}", error: true)
+    end
     []
   end
 
