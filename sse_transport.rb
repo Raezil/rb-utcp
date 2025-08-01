@@ -77,7 +77,7 @@ class SSEClientTransport
       headers, cookies = apply_auth(manual_provider, headers, query_params)
 
       if manual_provider.auth.is_a?(OAuth2Auth)
-        token = await(handle_oauth2(manual_provider.auth))
+        token = handle_oauth2(manual_provider.auth)
         headers['Authorization'] = "Bearer #{token}"
       end
 

@@ -88,7 +88,7 @@ class StreamableHttpClientTransport
       auth_header, cookies = apply_auth(manual_provider, request_headers, query_params)
 
       if manual_provider.auth.is_a?(OAuth2Auth)
-        token = await handle_oauth2(manual_provider.auth)
+        token = handle_oauth2(manual_provider.auth)
         request_headers['Authorization'] = "Bearer #{token}"
       end
 
@@ -170,7 +170,7 @@ class StreamableHttpClientTransport
     auth_header, cookies = apply_auth(tool_provider, request_headers, query_params)
 
     if tool_provider.auth.is_a?(OAuth2Auth)
-      token = await handle_oauth2(tool_provider.auth)
+      token = handle_oauth2(tool_provider.auth)
       request_headers['Authorization'] = "Bearer #{token}"
     end
 
