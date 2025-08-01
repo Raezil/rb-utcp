@@ -146,8 +146,8 @@ class UtcpClient
 
             provider = provider_class.model_validate(provider_data)
             provider = _substitute_provider_variables(provider)
-            tools = register_tool_provider(provider)
-            puts "Successfully registered provider '#{provider.name}' with #{tools.size} tools"
+      tools = await register_tool_provider(provider)
+      puts "Successfully registered provider '#{provider.name}' with #{tools.size} tools"
             provider
           rescue => e
             provider_name = provider_data['name'] || 'unknown'
@@ -215,6 +215,7 @@ class UtcpClient
 
       transport = transports[manual_provider.provider_type]
       tools = transport.register_tool_provider(manual_provider)
+      tools = await tools if tools.is_a?(Async::Task)
 
       tools.each do |tool|
         unless tool.name.start_with?("#{manual_provider.name}.")
@@ -232,7 +233,8 @@ class UtcpClient
       provider = tool_repository.get_provider(provider_name)
       raise ArgumentError, "Provider not found: #{provider_name}" unless provider
 
-      transports[provider.provider_type].deregister_tool_provider(provider)
+      result = transports[provider.provider_type].deregister_tool_provider(provider)
+      result = await result if result.is_a?(Async::Task)
       tool_repository.remove_provider(provider_name)
       nil
     end
@@ -252,7 +254,9 @@ class UtcpClient
       tool_provider = _substitute_provider_variables(tool_provider)
 
       transport = transports[tool_provider.provider_type]
-      transport.call_tool(tool_name, arguments, tool_provider)
+      result = transport.call_tool(tool_name, arguments, tool_provider)
+      result = await result if result.is_a?(Async::Task)
+      result
     end
   end
 
