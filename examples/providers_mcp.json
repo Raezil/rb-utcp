@@ -1,0 +1,14 @@
+[
+  {
+    "name": "mcpdemo",
+    "provider_type": "mcp",
+    "config": {
+      "mcpServers": {
+        "local": {
+          "transport": "http",
+          "url": "http://localhost:9999/"
+        }
+      }
+    }
+  }
+]
