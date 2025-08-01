@@ -263,7 +263,7 @@ class UtcpClient
 
   def search_tools(query, limit = 10)
     Async do
-      search_strategy.search_tools(query, limit)
+        search_strategy.search_tools(query, limit: limit)
     end
   end
 end

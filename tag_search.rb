@@ -11,8 +11,13 @@ class TagSearchStrategy < ToolSearchStrategy
   # @param query [String]
   # @param limit [Integer]
   # @return [Array<Tool>]
+  def normalized_downcase(str)
+    str.to_s.unicode_normalize(:nfc).downcase
+  end
+
   def search_tools(query, limit: 10)
-    query_lower = query.downcase
+    query_lower = normalized_downcase(query)
+
     query_words = Set.new(query_lower.scan(/\w+/))
 
     tools = @tool_repository.get_tools

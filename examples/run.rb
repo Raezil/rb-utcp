@@ -8,6 +8,8 @@ require_relative '../models'
 Async do
   config = UtcpClientConfig.new(providers_file_path: File.expand_path('providers.json', __dir__))
   client = UtcpClient.create(config: config).wait
+  tools = client.search_tools(10).wait
+  puts "Search results: #{tools.map(&:name).join(', ')}"
   result = client.call_tool('example.echo', { message: 'hello world' }).wait
   puts "Result: #{result}"
 end
