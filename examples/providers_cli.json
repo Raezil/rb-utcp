@@ -1,0 +1,7 @@
+[
+  {
+    "name": "cli_echo",
+    "provider_type": "cli",
+    "command_name": "ruby mock_cli.rb"
+  }
+]

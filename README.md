@@ -13,3 +13,14 @@ ruby run.rb
 
 The example registers a text provider defined in `providers.json` and calls the
 `echo` tool from `echo_tool.json`.
+
+## Transport Examples
+
+Additional example scripts are available under `examples/` for other transports. These include small mock servers and a CLI to demonstrate usage:
+
+- `mock_http_server.rb` with `run_http.rb`
+- `mock_sse_server.rb` with `run_sse.rb`
+- `mock_http_stream_server.rb` with `run_stream.rb`
+- `mock_cli.rb` with `run_cli.rb`
+
+Start the corresponding mock server (or CLI) and run the matching `run_*.rb` script from the `examples` directory.
