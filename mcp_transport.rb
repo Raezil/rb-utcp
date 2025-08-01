@@ -3,6 +3,8 @@ require 'json'
 require 'logger'
 require 'faraday'
 require 'base64'
+require 'net/http'
+require 'uri'
 require_relative 'models'
 
 # Placeholder classes/modules: you need real equivalents or adapters in your codebase.
@@ -35,79 +37,64 @@ class MCPTransport
 
   # Internal: list tools via a fresh session
   def list_tools_with_session(server_config, auth: nil)
-    Async do
-      case server_config.transport
-      when 'stdio'
-        params = StdioServerParameters.new(
-          command: server_config.command,
-          args: server_config.args,
-          env: server_config.env
-        )
-        Async::Task.current.perform do
-          stdio_client(params) do |read, write|
-            session = ClientSession.new(read, write)
-            session.initialize
-            tools_response = session.list_tools
-            return tools_response.tools
-          end
-        end
-      when 'http'
-        auth_header = nil
-        if auth && auth.is_a?(OAuth2Auth)
-          token = handle_oauth2(auth)
-          auth_header = { 'Authorization' => "Bearer #{token}" }
-        end
+    transport = server_config[:transport] || server_config['transport']
 
-        Async::Task.current.perform do
-          streamablehttp_client(url: server_config.url, auth: auth_header) do |read, write, _|
-            session = ClientSession.new(read, write)
-            session.initialize
-            tools_response = session.list_tools
-            return tools_response.tools
-          end
-        end
-      else
-        raise ArgumentError, "Unsupported MCP transport: #{server_config.transport}"
+    case transport
+    when 'http'
+      headers = {}
+      if auth && auth.is_a?(OAuth2Auth)
+        token = handle_oauth2(auth)
+        headers['Authorization'] = "Bearer #{token}"
       end
+
+      uri = URI(server_config[:url] || server_config['url'])
+      http = Net::HTTP.new(uri.host, uri.port)
+      http.use_ssl = uri.scheme == 'https'
+      req = Net::HTTP::Get.new(uri)
+      headers.each { |k, v| req[k] = v }
+
+      response = http.request(req)
+      unless response.is_a?(Net::HTTPSuccess)
+        raise "HTTP error: #{response.code} #{response.body}"
+      end
+      data = JSON.parse(response.body)
+      manual = UtcpManual.model_validate(data)
+      manual.tools
+    when 'stdio'
+      raise ArgumentError, 'stdio transport not implemented'
+    else
+      raise ArgumentError, "Unsupported MCP transport: #{transport}"
     end
   end
 
   # Internal: call tool via a fresh session
   def call_tool_with_session(server_config, tool_name, inputs, auth: nil)
-    Async do
-      case server_config.transport
-      when 'stdio'
-        params = StdioServerParameters.new(
-          command: server_config.command,
-          args: server_config.args,
-          env: server_config.env
-        )
-        Async::Task.current.perform do
-          stdio_client(params) do |read, write|
-            session = ClientSession.new(read, write)
-            session.initialize
-            result = session.call_tool(tool_name, arguments: inputs)
-            return result
-          end
-        end
-      when 'http'
-        auth_header = nil
-        if auth && auth.is_a?(OAuth2Auth)
-          token = handle_oauth2(auth)
-          auth_header = { 'Authorization' => "Bearer #{token}" }
-        end
+    transport = server_config[:transport] || server_config['transport']
 
-        Async::Task.current.perform do
-          streamablehttp_client(url: server_config.url, auth: auth_header) do |read, write, _|
-            session = ClientSession.new(read, write)
-            session.initialize
-            result = session.call_tool(tool_name, arguments: inputs)
-            return result
-          end
-        end
-      else
-        raise ArgumentError, "Unsupported MCP transport: #{server_config.transport}"
+    case transport
+    when 'http'
+      headers = { 'Content-Type' => 'application/json' }
+      if auth && auth.is_a?(OAuth2Auth)
+        token = handle_oauth2(auth)
+        headers['Authorization'] = "Bearer #{token}"
       end
+
+      uri = URI(server_config[:url] || server_config['url'])
+      http = Net::HTTP.new(uri.host, uri.port)
+      http.use_ssl = uri.scheme == 'https'
+      req = Net::HTTP::Post.new(uri, headers)
+      req.body = JSON.generate(inputs || {})
+
+      response = http.request(req)
+      unless response.is_a?(Net::HTTPSuccess)
+        raise "HTTP error: #{response.code} #{response.body}"
+      end
+
+      JSON.parse(response.body)
+    when 'stdio'
+      raise ArgumentError, 'stdio transport not implemented'
+    else
+      raise ArgumentError, "Unsupported MCP transport: #{transport}"
     end
   end
 
@@ -151,7 +138,7 @@ class MCPTransport
 
         result_task = call_tool_with_session(server_config, tool_name, inputs, auth: tool_provider.auth)
         result = result_task.is_a?(Async::Task) ? result_task.wait : result_task
-        return process_tool_result(result, tool_name)
+        return _process_tool_result(result, tool_name)
       rescue => e
         log("Error calling tool '#{tool_name}' on server '#{server_name}': #{e}", error: true)
         next
