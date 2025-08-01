@@ -229,7 +229,7 @@ class CliTransport
     if data.is_a?(Hash)
       if data.key?('tools')
         begin
-          utcp_manual = UtcpManual.new(**data)
+          utcp_manual = UtcpManual.model_validate(data)
           return utcp_manual.tools || []
         rescue StandardError => e
           log_error("Invalid UTCP manual format from provider '#{provider_name}': #{e}")
@@ -237,7 +237,7 @@ class CliTransport
         end
       elsif data.key?('name') && data.key?('description')
         begin
-          return [Tool.new(**data)]
+          return [Tool.model_validate(data)]
         rescue StandardError => e
           log_error("Invalid tool definition from provider '#{provider_name}': #{e}")
           return []
@@ -245,7 +245,7 @@ class CliTransport
       end
     elsif data.is_a?(Array)
       begin
-        return data.map { |tool_data| Tool.new(**tool_data) }
+        return data.map { |tool_data| Tool.model_validate(tool_data) }
       rescue StandardError => e
         log_error("Invalid tool array from provider '#{provider_name}': #{e}")
         return []

@@ -9,6 +9,12 @@ class Tool
     @output_schema = output_schema
     @tool_provider = tool_provider
   end
+
+  def self.model_validate(hash)
+    raise ArgumentError, "Expected a Hash" unless hash.is_a?(Hash)
+
+    new(**hash.transform_keys(&:to_sym))
+  end
 end
 
 class UtcpManual
@@ -16,6 +22,16 @@ class UtcpManual
 
   def initialize(tools: [])
     @tools = tools
+  end
+
+  def self.model_validate(hash)
+    raise ArgumentError, "Expected a Hash" unless hash.is_a?(Hash)
+
+    tools = (hash[:tools] || hash['tools'] || []).map do |tool|
+      tool.is_a?(Tool) ? tool : Tool.model_validate(tool)
+    end
+
+    new(tools: tools)
   end
 end
 
