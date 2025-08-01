@@ -19,6 +19,12 @@ class SSEClientTransport
     @active_connections = {} # provider_name => [response, internet]
   end
 
+  # Example usage:
+  #   provider = SSEProvider.new(name: 'example', url: 'https://example.com/events')
+  #   transport = SSEClientTransport.new
+  #   enum = transport.call_tool('stream', {}, provider)
+  #   enum.each { |event| puts event }
+
   # Apply authentication similar to Python version.
   # Returns [auth_header_hash, cookies_hash]
   def apply_auth(provider, headers, query_params)

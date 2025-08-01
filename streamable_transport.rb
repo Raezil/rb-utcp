@@ -21,6 +21,12 @@ class StreamableHttpClientTransport
     @active_connections = {} # provider_name => {response: , client: }
   end
 
+  # Example usage:
+  #   provider = StreamableHttpProvider.new(name: 'example', url: 'https://example.com/stream')
+  #   transport = StreamableHttpClientTransport.new
+  #   stream = transport.call_tool('stream', {}, provider)
+  #   stream.each { |chunk| puts chunk }
+
   # Apply authentication, returns [auth_header_hash, cookies_hash]
   def apply_auth(provider, headers, query_params)
     auth_header = {}

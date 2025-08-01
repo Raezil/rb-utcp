@@ -14,6 +14,12 @@ class HttpClientTransport
     @oauth_tokens = {}
   end
 
+  # Example usage:
+  #   provider = HttpProvider.new(name: 'example', url: 'https://example.com/manual.json')
+  #   transport = HttpClientTransport.new
+  #   tools = transport.register_tool_provider(provider)
+  #   result = transport.call_tool(tool_name: tools.first.name, arguments: {}, tool_provider: provider)
+
   # Discover tools from a REST provider (synchronous version)
   def register_tool_provider(manual_provider)
     unless manual_provider.is_a?(HttpProvider)
