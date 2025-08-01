@@ -23,6 +23,6 @@ Additional example scripts are available under `examples/` for other transports.
 - `mock_http_stream_server.rb` with `run_stream.rb`
 - `mock_cli.rb` with `run_cli.rb`
 - `mock_graphql_server.rb` with `run_graphql.rb`
-- `run_mcp.rb` (requires an MCP server)
+- `mock_mcp_server.rb` with `run_mcp.rb`
 
 Start the corresponding mock server (or CLI) and run the matching `run_*.rb` script from the `examples` directory.
