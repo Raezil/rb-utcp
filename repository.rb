@@ -8,6 +8,7 @@ class InMemToolRepository
   # @param provider [Provider]
   # @param tools [Array<Tool>]
   def save_provider_with_tools(provider, tools)
+    tools.each { |t| t.tool_provider = provider }
     @tools.concat(tools)
     @tool_per_provider[provider.name] = [provider, tools]
     nil

@@ -3,6 +3,7 @@ require 'httpx'
 require 'json'
 require 'uri'
 require 'logger'
+require_relative 'models'
 
 # Placeholder / expected interfaces; adapt or replace with your actual implementations:
 # class ClientTransportInterface; end
