@@ -57,7 +57,7 @@ class TextTransport
 
       utcp_manual = nil
 
-      if data.is_a?(Hash) && data.key?('version') && data.key?('tools')
+      if data.is_a?(Hash) && data.key?('tools')
         log_info("Detected UTCP manual in '#{file_path}'.")
         # Assuming UtcpManual accepts keyword args from the hash
         utcp_manual = UtcpManual.new(**symbolize_keys_recursive(data))

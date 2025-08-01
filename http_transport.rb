@@ -82,7 +82,7 @@ class HttpClientTransport
         response_data = JSON.parse(body_text)
       end
 
-      if response_data.key?('version') && response_data.key?('tools')
+      if response_data.is_a?(Hash) && response_data.key?('tools')
         @logger.call("Detected UTCP manual from '#{manual_provider.name}'.")
         utcp_manual = UtcpManual.new(**response_data)
       else
