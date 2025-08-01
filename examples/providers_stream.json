@@ -1,0 +1,10 @@
+[
+  {
+    "name": "streamdemo",
+    "provider_type": "http_stream",
+    "url": "http://localhost:4569/numbers",
+    "http_method": "POST",
+    "content_type": "application/json",
+    "chunk_size": 1024
+  }
+]
