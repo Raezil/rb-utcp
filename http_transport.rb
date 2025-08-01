@@ -18,7 +18,7 @@ class HttpClientTransport
   #   provider = HttpProvider.new(name: 'example', url: 'https://example.com/manual.json')
   #   transport = HttpClientTransport.new
   #   tools = transport.register_tool_provider(provider)
-  #   result = transport.call_tool(tool_name: tools.first.name, arguments: {}, tool_provider: provider)
+  #   result = transport.call_tool(tools.first.name, {}, provider)
 
   # Discover tools from a REST provider (synchronous version)
   def register_tool_provider(manual_provider)
@@ -111,7 +111,7 @@ class HttpClientTransport
     # No-op; stateless
   end
 
-  def call_tool(tool_name:, arguments:, tool_provider:)
+  def call_tool(tool_name, arguments, tool_provider)
     unless tool_provider.is_a?(HttpProvider)
       raise ArgumentError, 'HttpClientTransport can only be used with HttpProvider'
     end

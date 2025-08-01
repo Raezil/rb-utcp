@@ -151,7 +151,7 @@ class MCPTransport
 
         result_task = call_tool_with_session(server_config, tool_name, inputs, auth: tool_provider.auth)
         result = result_task.is_a?(Async::Task) ? result_task.wait : result_task
-        return process_tool_result(result, tool_name)
+        return _process_tool_result(result, tool_name)
       rescue => e
         log("Error calling tool '#{tool_name}' on server '#{server_name}': #{e}", error: true)
         next
