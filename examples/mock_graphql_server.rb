@@ -1,4 +1,4 @@
-require 'webrick'
+require 'socket'
 require 'json'
 
 manual = {
@@ -12,22 +12,48 @@ manual = {
   ]
 }
 
-server = WEBrick::HTTPServer.new(Port: 4570, AccessLog: [], Logger: WEBrick::Log.new(nil, WEBrick::Log::FATAL))
+server = TCPServer.new(4570)
+puts 'GraphQL server listening on http://localhost:4570'
 
-server.mount_proc '/graphql' do |req, res|
-  res['Content-Type'] = 'application/json'
-  if req.request_method == 'POST' && req.body && !req.body.empty?
+trap('INT') { server.close; exit }
+
+def read_request(socket)
+  request_line = socket.gets
+  return if request_line.nil?
+  method, path, _ = request_line.split
+  headers = {}
+  while (line = socket.gets) && line != "\r\n"
+    key, value = line.split(':', 2)
+    headers[key] = value.strip if key && value
+  end
+  body = ''
+  if headers['Content-Length']
+    body = socket.read(headers['Content-Length'].to_i)
+  end
+  [method, path, headers, body]
+end
+
+loop do
+  client = server.accept
+  method, path, _headers, body = read_request(client)
+  next unless method
+
+  if method == 'POST' && body && !body.empty?
     begin
-      data = JSON.parse(req.body)
+      data = JSON.parse(body)
     rescue JSON::ParserError
       data = {}
     end
     message = data.dig('variables', 'message') || 'default'
-    res.body = { data: { echo: message } }.to_json
+    response_body = { data: { echo: message } }.to_json
   else
-    res.body = manual.to_json
+    response_body = manual.to_json
   end
-end
 
-trap('INT') { server.shutdown }
-server.start
+  client.write "HTTP/1.1 200 OK\r\n"
+  client.write "Content-Type: application/json\r\n"
+  client.write "Content-Length: #{response_body.bytesize}\r\n"
+  client.write "\r\n"
+  client.write response_body
+  client.close
+end
