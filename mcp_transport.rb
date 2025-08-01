@@ -101,16 +101,19 @@ class MCPTransport
   # Public: register provider and discover tools
   def register_tool_provider(manual_provider)
     all_tools = []
-    if manual_provider.config && manual_provider.config.mcpServers
-      manual_provider.config.mcpServers.each do |server_name, server_config|
-        begin
-          log("Discovering tools for server '#{server_name}' via #{server_config.transport}")
-          tools_task = list_tools_with_session(server_config, auth: manual_provider.auth)
-          tools = tools_task.is_a?(Async::Task) ? tools_task.wait : tools_task
-          log("Discovered #{tools.size} tools for server '#{server_name}'")
-          all_tools.concat(tools)
-        rescue => e
-          log("Failed to discover tools for server '#{server_name}': #{e}", error: true)
+    if manual_provider.config
+      servers = manual_provider.config[:mcpServers] || manual_provider.config['mcpServers']
+      if servers
+        servers.each do |server_name, server_config|
+          begin
+            log("Discovering tools for server '#{server_name}' via #{server_config.transport}")
+            tools_task = list_tools_with_session(server_config, auth: manual_provider.auth)
+            tools = tools_task.is_a?(Async::Task) ? tools_task.wait : tools_task
+            log("Discovered #{tools.size} tools for server '#{server_name}'")
+            all_tools.concat(tools)
+          rescue => e
+            log("Failed to discover tools for server '#{server_name}': #{e}", error: true)
+          end
         end
       end
     end
@@ -119,11 +122,15 @@ class MCPTransport
 
   # Public: call a named tool via provider config
   def call_tool(tool_name, inputs, tool_provider)
-    unless tool_provider.config && tool_provider.config.mcpServers
+    servers = nil
+    if tool_provider.config
+      servers = tool_provider.config[:mcpServers] || tool_provider.config['mcpServers']
+    end
+    unless servers
       raise ArgumentError, "No server configuration found for tool '#{tool_name}'"
     end
 
-    tool_provider.config.mcpServers.each do |server_name, server_config|
+    servers.each do |server_name, server_config|
       begin
         log("Attempting to call tool '#{tool_name}' on server '#{server_name}'")
 
