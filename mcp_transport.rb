@@ -112,7 +112,8 @@ class MCPTransport
       manual_provider.config.mcpServers.each do |server_name, server_config|
         begin
           log("Discovering tools for server '#{server_name}' via #{server_config.transport}")
-          tools = list_tools_with_session(server_config, auth: manual_provider.auth)
+          tools_task = list_tools_with_session(server_config, auth: manual_provider.auth)
+          tools = tools_task.is_a?(Async::Task) ? tools_task.wait : tools_task
           log("Discovered #{tools.size} tools for server '#{server_name}'")
           all_tools.concat(tools)
         rescue => e
@@ -133,7 +134,8 @@ class MCPTransport
       begin
         log("Attempting to call tool '#{tool_name}' on server '#{server_name}'")
 
-        tools = list_tools_with_session(server_config, auth: tool_provider.auth)
+        tools_task = list_tools_with_session(server_config, auth: tool_provider.auth)
+        tools = tools_task.is_a?(Async::Task) ? tools_task.wait : tools_task
         tool_names = tools.map(&:name)
 
         unless tool_names.include?(tool_name)
@@ -141,7 +143,8 @@ class MCPTransport
           next
         end
 
-        result = call_tool_with_session(server_config, tool_name, inputs, auth: tool_provider.auth)
+        result_task = call_tool_with_session(server_config, tool_name, inputs, auth: tool_provider.auth)
+        result = result_task.is_a?(Async::Task) ? result_task.wait : result_task
         return process_tool_result(result, tool_name)
       rescue => e
         log("Error calling tool '#{tool_name}' on server '#{server_name}': #{e}", error: true)
