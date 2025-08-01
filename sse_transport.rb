@@ -83,7 +83,8 @@ class SSEClientTransport
       headers, cookies = apply_auth(manual_provider, headers, query_params)
 
       if manual_provider.auth.is_a?(OAuth2Auth)
-        token = handle_oauth2(manual_provider.auth)
+        token_task = handle_oauth2(manual_provider.auth)
+        token = token_task.is_a?(Async::Task) ? token_task.wait : token_task
         headers['Authorization'] = "Bearer #{token}"
       end
 
@@ -130,7 +131,7 @@ class SSEClientTransport
 
           data = JSON.parse(response.read)
           utcp_manual = UtcpManual.model_validate(data)
-          return utcp_manual.tools
+          utcp_manual.tools
         ensure
           internet.close
         end
@@ -180,7 +181,8 @@ class SSEClientTransport
     headers, cookies = apply_auth(tool_provider, headers, query_params)
 
     if tool_provider.auth.is_a?(OAuth2Auth)
-      token = await(handle_oauth2(tool_provider.auth))
+      token_task = handle_oauth2(tool_provider.auth)
+      token = token_task.is_a?(Async::Task) ? token_task.wait : token_task
       headers['Authorization'] = "Bearer #{token}"
     end
 
@@ -223,7 +225,7 @@ class SSEClientTransport
         @active_connections[tool_provider.name] = [response, internet]
 
         # Return an async enumerator for SSE events
-        return enum_for(:process_sse_stream, response, tool_provider.event_type)
+        enum_for(:process_sse_stream, response, tool_provider.event_type)
       rescue => e
         internet.close
         @log.call("Error establishing SSE connection to '#{tool_provider.name}': #{e}", error: true)
@@ -318,7 +320,7 @@ class SSEClientTransport
         if response.status.between?(200, 299)
           token_response = JSON.parse(response.read)
           @oauth_tokens[client_id] = token_response
-          return token_response['access_token']
+          token_response['access_token']
         else
           @log.call("OAuth2 with body failed: #{response.status} #{response.read}. Trying header fallback.")
         end
@@ -331,20 +333,20 @@ class SSEClientTransport
       # Method 2: Basic auth header
       begin
         header_credential = Base64.strict_encode64("#{client_id}:#{auth_details.client_secret}")
-        headers = {
-          'Authorization' => "Basic #{header_credential}",
-          'Content-Type' => 'application/x-www-form-urlencoded'
-        }
-        body = { 'grant_type' => 'client_credentials', 'scope' => auth_details.scope }
-        response = internet.post(auth_details.token_url, headers, URI.encode_www_form(body))
-        if response.status.between?(200, 299)
-          token_response = JSON.parse(response.read)
-          @oauth_tokens[client_id] = token_response
-          return token_response['access_token']
-        else
-          @log.call("OAuth2 with header failed: #{response.status} #{response.read}")
-          raise "OAuth2 token retrieval failed with header method"
-        end
+          headers = {
+            'Authorization' => "Basic #{header_credential}",
+            'Content-Type' => 'application/x-www-form-urlencoded'
+          }
+          body = { 'grant_type' => 'client_credentials', 'scope' => auth_details.scope }
+          response = internet.post(auth_details.token_url, headers, URI.encode_www_form(body))
+          if response.status.between?(200, 299)
+            token_response = JSON.parse(response.read)
+            @oauth_tokens[client_id] = token_response
+            token_response['access_token']
+          else
+            @log.call("OAuth2 with header failed: #{response.status} #{response.read}")
+            raise "OAuth2 token retrieval failed with header method"
+          end
       rescue => e
         @log.call("OAuth2 with header failed: #{e}")
         raise
