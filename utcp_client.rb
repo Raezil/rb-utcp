@@ -90,7 +90,7 @@ class UtcpClient
       end
 
       awaitable_providers = client.load_providers(client.config.providers_file_path)
-      registered = awaitable_providers
+      registered = awaitable_providers.is_a?(Async::Task) ? awaitable_providers.wait : awaitable_providers
       client
     end
   end
@@ -146,7 +146,8 @@ class UtcpClient
 
             provider = provider_class.model_validate(provider_data)
             provider = _substitute_provider_variables(provider)
-      tools = register_tool_provider(provider)
+      tools_task = register_tool_provider(provider)
+      tools = tools_task.is_a?(Async::Task) ? tools_task.wait : tools_task
       puts "Successfully registered provider '#{provider.name}' with #{tools.size} tools"
             provider
           rescue => e
@@ -214,8 +215,8 @@ class UtcpClient
       end
 
       transport = transports[manual_provider.provider_type]
-      tools = transport.register_tool_provider(manual_provider)
-      tools = tools if tools.is_a?(Async::Task)
+      tools_task = transport.register_tool_provider(manual_provider)
+      tools = tools_task.is_a?(Async::Task) ? tools_task.wait : tools_task
 
       tools.each do |tool|
         unless tool.name.start_with?("#{manual_provider.name}.")
@@ -233,8 +234,8 @@ class UtcpClient
       provider = tool_repository.get_provider(provider_name)
       raise ArgumentError, "Provider not found: #{provider_name}" unless provider
 
-      result = transports[provider.provider_type].deregister_tool_provider(provider)
-      result = result if result.is_a?(Async::Task)
+      result_task = transports[provider.provider_type].deregister_tool_provider(provider)
+      result = result_task.is_a?(Async::Task) ? result_task.wait : result_task
       tool_repository.remove_provider(provider_name)
       nil
     end
@@ -254,8 +255,8 @@ class UtcpClient
       tool_provider = _substitute_provider_variables(tool_provider)
 
       transport = transports[tool_provider.provider_type]
-      result = transport.call_tool(tool_name, arguments, tool_provider)
-      result = result if result.is_a?(Async::Task)
+      result_task = transport.call_tool(tool_name, arguments, tool_provider)
+      result = result_task.is_a?(Async::Task) ? result_task.wait : result_task
       result
     end
   end
