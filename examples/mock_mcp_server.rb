@@ -1,4 +1,4 @@
-require 'webrick'
+require 'socket'
 require 'json'
 
 manual = {
@@ -12,21 +12,47 @@ manual = {
   ]
 }
 
-server = WEBrick::HTTPServer.new(Port: 9999, AccessLog: [], Logger: WEBrick::Log.new(nil, WEBrick::Log::FATAL))
+server = TCPServer.new(9999)
+puts 'MCP HTTP server listening on http://localhost:9999'
 
-server.mount_proc '/' do |req, res|
-  res['Content-Type'] = 'application/json'
-  if req.request_method == 'POST' && req.body && !req.body.empty?
+trap('INT') { server.close; exit }
+
+def read_request(socket)
+  request_line = socket.gets
+  return if request_line.nil?
+  method, path, _ = request_line.split
+  headers = {}
+  while (line = socket.gets) && line != "\r\n"
+    key, value = line.split(':', 2)
+    headers[key] = value.strip if key && value
+  end
+  body = ''
+  if headers['Content-Length']
+    body = socket.read(headers['Content-Length'].to_i)
+  end
+  [method, path, headers, body]
+end
+
+loop do
+  client = server.accept
+  method, path, _headers, body = read_request(client)
+  next unless method
+
+  if method == 'POST' && body && !body.empty?
     begin
-      data = JSON.parse(req.body)
+      data = JSON.parse(body)
     rescue JSON::ParserError
       data = {}
     end
-    res.body = { message: data['message'] }.to_json
+    response_body = { message: data['message'] }.to_json
   else
-    res.body = manual.to_json
+    response_body = manual.to_json
   end
-end
 
-trap('INT') { server.shutdown }
-server.start
+  client.write "HTTP/1.1 200 OK\r\n"
+  client.write "Content-Type: application/json\r\n"
+  client.write "Content-Length: #{response_body.bytesize}\r\n"
+  client.write "\r\n"
+  client.write response_body
+  client.close
+end
