@@ -123,7 +123,7 @@ class SSEClientTransport
           end
 
           data = JSON.parse(response.read)
-          utcp_manual = UtcpManual.new(**data) # adjust depending on initializer
+          utcp_manual = UtcpManual.model_validate(data)
           return utcp_manual.tools
         ensure
           internet.close

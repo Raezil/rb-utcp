@@ -124,7 +124,7 @@ class StreamableHttpClientTransport
 
       body_text = response.to_s
       parsed = JSON.parse(body_text)
-      utcp_manual = UtcpManual.new(**parsed)
+      utcp_manual = UtcpManual.model_validate(parsed)
       return utcp_manual.tools
     rescue => e
       @log.error("Error discovering tools from '#{manual_provider.name}': #{e}")

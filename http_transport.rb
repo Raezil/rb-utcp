@@ -84,7 +84,7 @@ class HttpClientTransport
 
       if response_data.is_a?(Hash) && response_data.key?('tools')
         @logger.call("Detected UTCP manual from '#{manual_provider.name}'.")
-        utcp_manual = UtcpManual.new(**response_data)
+        utcp_manual = UtcpManual.model_validate(response_data)
       else
         @logger.call("Assuming OpenAPI spec from '#{manual_provider.name}'. Converting to UTCP manual.")
         converter = OpenApiConverter.new(response_data, spec_url: manual_provider.url, provider_name: manual_provider.name)
