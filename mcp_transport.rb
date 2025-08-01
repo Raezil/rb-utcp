@@ -3,6 +3,7 @@ require 'json'
 require 'logger'
 require 'faraday'
 require 'base64'
+require_relative 'models'
 
 # Placeholder classes/modules: you need real equivalents or adapters in your codebase.
 # class StdioServerParameters; end

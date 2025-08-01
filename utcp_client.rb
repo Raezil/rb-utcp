@@ -1,6 +1,7 @@
 require 'json'
 require 'pathname'
 require 'async'
+require_relative 'models'
 
 # Custom error types
 class UtcpVariableNotFound < StandardError; end

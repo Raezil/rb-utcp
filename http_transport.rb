@@ -5,6 +5,7 @@ require 'yaml'
 require 'base64'
 require 'logger'
 require 'openssl'
+require_relative 'models'
 
 class HttpClientTransport
   # logger: proc { |msg, error: false| ... }

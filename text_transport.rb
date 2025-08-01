@@ -3,6 +3,7 @@ require 'yaml'
 require 'logger'
 require 'pathname'
 require 'uri'
+require_relative 'models'
 
 # Placeholder modules/classes; replace with your actual implementations.
 # module Utcp

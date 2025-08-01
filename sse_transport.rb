@@ -3,6 +3,7 @@ require 'async/http/internet'
 require 'json'
 require 'uri'
 require 'base64'
+require_relative 'models'
 
 # Placeholder auth classes; assume real ones exist in your codebase.
 # class ApiKeyAuth; attr_accessor :api_key, :location, :var_name; end

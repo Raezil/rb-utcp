@@ -1,12 +1,9 @@
 require 'net/http'
 require 'uri'
-require 'base64'
 require 'json'
-require 'graphql/client'
-require 'graphql/client/http'
 require 'logger'
+require_relative 'models'
 
-# Simple in-memory OAuth2 token cache
 class OAuth2TokenCache
   def initialize
     @cache = {}
@@ -16,8 +13,8 @@ class OAuth2TokenCache
     @cache[client_id]
   end
 
-  def store(client_id, token_response)
-    @cache[client_id] = token_response
+  def store(client_id, token)
+    @cache[client_id] = token
   end
 
   def clear
@@ -26,42 +23,60 @@ class OAuth2TokenCache
 end
 
 class GraphQLClientTransport
-  # logger: callable like ->(msg, error: false) { ... }
   def initialize(logger: nil)
-    @log = logger || proc { |msg, **_| } # no-op
+    @log = logger || proc { |_msg, **_k| }
     @oauth_tokens = OAuth2TokenCache.new
   end
 
   def enforce_https_or_localhost!(url)
-    unless url.start_with?('https://') ||
-           url.start_with?('http://localhost') ||
-           url.start_with?('http://127.0.0.1')
-      raise ArgumentError,
-            "Security error: URL must use HTTPS or start with 'http://localhost' or 'http://127.0.0.1'. Got: #{url}. Non-secure URLs are vulnerable to man-in-the-middle attacks."
+    unless url.start_with?('https://') || url.start_with?('http://localhost') || url.start_with?('http://127.0.0.1')
+      raise ArgumentError, "Security error: URL must use HTTPS or localhost. Got: #{url}"
     end
   end
 
   def handle_oauth2(auth)
-    client_id = auth.client_id
-    cached = @oauth_tokens.fetch(client_id)
+    cached = @oauth_tokens.fetch(auth.client_id)
     return cached['access_token'] if cached
 
     uri = URI.parse(auth.token_url)
     req = Net::HTTP::Post.new(uri)
-    req.set_form_data(
-      'grant_type' => 'client_credentials',
-      'client_id' => client_id,
-      'client_secret' => auth.client_secret,
-      'scope' => auth.scope
-    )
-
+    req.set_form_data('grant_type' => 'client_credentials', 'client_id' => auth.client_id,
+                      'client_secret' => auth.client_secret, 'scope' => auth.scope)
     http = Net::HTTP.new(uri.host, uri.port)
     http.use_ssl = uri.scheme == 'https'
     resp = http.request(req)
-    unless resp.is_a?(Net::HTTPSuccess)
-      raise "OAuth2 token request failed: #{resp.code} #{resp.body}"
-    end
-
+    raise "OAuth2 token request failed: #{resp.code} #{resp.body}" unless resp.is_a?(Net::HTTPSuccess)
     token_response = JSON.parse(resp.body)
-    @oauth_tokens.store(client_id, token_response)
-    t
+    @oauth_tokens.store(auth.client_id, token_response)
+    token_response['access_token']
+  end
+
+  def register_tool_provider(_manual_provider)
+    []
+  end
+
+  def deregister_tool_provider(_provider); end
+
+  def call_tool(_tool_name, arguments, tool_provider)
+    enforce_https_or_localhost!(tool_provider.url)
+    headers = (tool_provider.headers || {}).dup
+    if tool_provider.auth.is_a?(OAuth2Auth)
+      token = handle_oauth2(tool_provider.auth)
+      headers['Authorization'] = "Bearer #{token}"
+    end
+    query = arguments[:query] || arguments['query']
+    variables = arguments[:variables] || arguments['variables'] || {}
+    raise ArgumentError, 'query is required' unless query
+
+    uri = URI.parse(tool_provider.url)
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.use_ssl = uri.scheme == 'https'
+    req = Net::HTTP::Post.new(uri)
+    req.initialize_http_header(headers)
+    req['Content-Type'] = 'application/json'
+    req.body = JSON.dump({ query: query, variables: variables })
+    resp = http.request(req)
+    raise "GraphQL request failed: #{resp.code} #{resp.body}" unless resp.is_a?(Net::HTTPSuccess)
+    JSON.parse(resp.body)
+  end
+end

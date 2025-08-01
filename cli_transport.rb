@@ -6,6 +6,7 @@ require 'timeout'
 require 'logger'
 require 'shellwords'
 require 'rbconfig'
+require_relative 'models'
 
 # Assumes Provider, CliProvider, Tool, and UtcpManual are defined elsewhere, e.g.:
 # class CliProvider; attr_accessor :name, :command_name, :env_vars, :working_dir; end

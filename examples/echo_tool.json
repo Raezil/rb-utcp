@@ -1,0 +1,12 @@
+{
+  "version": "1.0",
+  "tools": [
+    {
+      "name": "echo",
+      "description": "Echo back input",
+      "tags": ["utility"],
+      "input_schema": {"type": "object", "properties": {"message": {"type": "string"}}, "required": ["message"]},
+      "output_schema": {"type": "string"}
+    }
+  ]
+}
