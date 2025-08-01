@@ -29,6 +29,12 @@ class TextTransport
     @logger.progname = 'TextTransport'
   end
 
+  # Example usage:
+  #   provider = TextProvider.new(name: 'example', file_path: 'echo_tool.json')
+  #   transport = TextTransport.new(base_path: File.expand_path('examples', __dir__))
+  #   tools = transport.register_tool_provider(provider)
+  #   content = transport.call_tool('example.echo', {}, provider)
+
   def register_tool_provider(manual_provider)
     unless manual_provider.is_a?(TextProvider)
       raise ArgumentError, "TextTransport can only be used with TextProvider"

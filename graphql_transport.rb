@@ -28,6 +28,11 @@ class GraphQLClientTransport
     @oauth_tokens = OAuth2TokenCache.new
   end
 
+  # Example usage:
+  #   provider = GraphQLProvider.new(name: 'example', url: 'https://example.com/graphql')
+  #   transport = GraphQLClientTransport.new
+  #   result = transport.call_tool('query', { query: '{ hello }' }, provider)
+
   def enforce_https_or_localhost!(url)
     unless url.start_with?('https://') || url.start_with?('http://localhost') || url.start_with?('http://127.0.0.1')
       raise ArgumentError, "Security error: URL must use HTTPS or localhost. Got: #{url}"

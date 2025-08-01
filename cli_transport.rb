@@ -16,6 +16,12 @@ require_relative 'models'
 #   def initialize(**kwargs); ...; end
 # end
 
+# Example usage:
+#   provider = CliProvider.new(name: 'example', command_name: 'echo')
+#   transport = CliTransport.new
+#   transport.register_tool_provider(provider)
+#   result = transport.call_tool('echo', { message: 'hi' }, provider)
+
 class CliTransport
   DEFAULT_DISCOVERY_TIMEOUT = 30
   DEFAULT_TOOL_TIMEOUT = 60

@@ -19,6 +19,12 @@ class MCPTransport
     @logger = logger || Logger.new($stdout)
   end
 
+  # Example usage:
+  #   provider = MCPProvider.new(name: 'example', config: {})
+  #   transport = MCPTransport.new
+  #   tools = transport.list_tools_with_session(provider.config)
+  #   result = transport.call_tool('echo', { message: 'hi' }, provider)
+
   def log(message, error: false)
     if error
       @logger.error("[MCPTransport Error] #{message}")
