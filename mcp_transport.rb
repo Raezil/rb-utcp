@@ -106,7 +106,7 @@ class MCPTransport
       if servers
         servers.each do |server_name, server_config|
           begin
-            log("Discovering tools for server '#{server_name}' via #{server_config.transport}")
+            log("Discovering tools for server '#{server_name}' via #{server_config[:transport] || server_config['transport']}")
             tools_task = list_tools_with_session(server_config, auth: manual_provider.auth)
             tools = tools_task.is_a?(Async::Task) ? tools_task.wait : tools_task
             log("Discovered #{tools.size} tools for server '#{server_name}'")
