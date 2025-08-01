@@ -55,7 +55,7 @@ class StreamableHttpClientTransport
     [auth_header, cookies]
   end
 
-  async def close
+  def close
     @log.info("Closing all active HTTP stream connections.")
     @active_connections.dup.each do |provider_name, conn|
       @log.info("Closing connection for provider: #{provider_name}")
@@ -69,7 +69,7 @@ class StreamableHttpClientTransport
     @oauth_tokens.clear
   end
 
-  async def register_tool_provider(manual_provider)
+  def register_tool_provider(manual_provider)
     unless manual_provider.is_a?(StreamableHttpProvider)
       raise ArgumentError, "StreamableHttpClientTransport can only be used with StreamableHttpProvider"
     end
@@ -132,7 +132,7 @@ class StreamableHttpClientTransport
     end
   end
 
-  async def deregister_tool_provider(manual_provider)
+  def deregister_tool_provider(manual_provider)
     return unless manual_provider.is_a?(StreamableHttpProvider)
 
     if @active_connections.key?(manual_provider.name)
@@ -143,7 +143,7 @@ class StreamableHttpClientTransport
     end
   end
 
-  async def call_tool(tool_name, arguments, tool_provider)
+  def call_tool(tool_name, arguments, tool_provider)
     unless tool_provider.is_a?(StreamableHttpProvider)
       raise ArgumentError, "StreamableHttpClientTransport can only be used with StreamableHttpProvider"
     end
@@ -268,7 +268,7 @@ class StreamableHttpClientTransport
     end
   end
 
-  async def handle_oauth2(auth_details)
+  def handle_oauth2(auth_details)
     client_id = auth_details.client_id
     if @oauth_tokens.key?(client_id)
       return @oauth_tokens[client_id]['access_token']

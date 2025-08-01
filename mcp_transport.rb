@@ -63,7 +63,7 @@ class MCPTransport
       else
         raise ArgumentError, "Unsupported MCP transport: #{server_config.transport}"
       end
-    end.wait
+    end
   end
 
   # Internal: call tool via a fresh session
@@ -102,7 +102,7 @@ class MCPTransport
       else
         raise ArgumentError, "Unsupported MCP transport: #{server_config.transport}"
       end
-    end.wait
+    end
   end
 
   # Public: register provider and discover tools

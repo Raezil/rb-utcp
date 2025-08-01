@@ -1,4 +1,5 @@
 require 'set'
+require_relative 'tool_search_strategy'
 
 class TagSearchStrategy < ToolSearchStrategy
   def initialize(tool_repository, description_weight: 0.3)

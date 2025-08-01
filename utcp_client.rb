@@ -90,7 +90,7 @@ class UtcpClient
       end
 
       awaitable_providers = client.load_providers(client.config.providers_file_path)
-      registered = awaitable_providers.wait
+      registered = awaitable_providers
       client
     end
   end
@@ -146,7 +146,7 @@ class UtcpClient
 
             provider = provider_class.model_validate(provider_data)
             provider = _substitute_provider_variables(provider)
-            tools = register_tool_provider(provider).wait
+            tools = register_tool_provider(provider)
             puts "Successfully registered provider '#{provider.name}' with #{tools.size} tools"
             provider
           rescue => e
@@ -214,7 +214,7 @@ class UtcpClient
       end
 
       transport = transports[manual_provider.provider_type]
-      tools = transport.register_tool_provider(manual_provider).wait
+      tools = transport.register_tool_provider(manual_provider)
 
       tools.each do |tool|
         unless tool.name.start_with?("#{manual_provider.name}.")
@@ -222,18 +222,18 @@ class UtcpClient
         end
       end
 
-      tool_repository.save_provider_with_tools(manual_provider, tools).wait
+      tool_repository.save_provider_with_tools(manual_provider, tools)
       tools
     end
   end
 
   def deregister_tool_provider(provider_name)
     Async do
-      provider = tool_repository.get_provider(provider_name).wait
+      provider = tool_repository.get_provider(provider_name)
       raise ArgumentError, "Provider not found: #{provider_name}" unless provider
 
-      transports[provider.provider_type].deregister_tool_provider(provider).wait
-      tool_repository.remove_provider(provider_name).wait
+      transports[provider.provider_type].deregister_tool_provider(provider)
+      tool_repository.remove_provider(provider_name)
       nil
     end
   end
@@ -241,10 +241,10 @@ class UtcpClient
   def call_tool(tool_name, arguments)
     Async do
       provider_name = tool_name.split('.').first
-      provider = tool_repository.get_provider(provider_name).wait
+      provider = tool_repository.get_provider(provider_name)
       raise ArgumentError, "Provider not found: #{provider_name}" unless provider
 
-      tools = tool_repository.get_tools_by_provider(provider_name).wait
+      tools = tool_repository.get_tools_by_provider(provider_name)
       tool = tools.find { |t| t.name == tool_name }
       raise ArgumentError, "Tool not found: #{tool_name}" unless tool
 
@@ -252,13 +252,13 @@ class UtcpClient
       tool_provider = _substitute_provider_variables(tool_provider)
 
       transport = transports[tool_provider.provider_type]
-      transport.call_tool(tool_name, arguments, tool_provider).wait
+      transport.call_tool(tool_name, arguments, tool_provider)
     end
   end
 
   def search_tools(query, limit = 10)
     Async do
-      search_strategy.search_tools(query, limit).wait
+      search_strategy.search_tools(query, limit)
     end
   end
 end

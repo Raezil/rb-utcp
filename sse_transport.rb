@@ -56,7 +56,7 @@ class SSEClientTransport
     [headers, cookies]
   end
 
-  async def register_tool_provider(manual_provider)
+  def register_tool_provider(manual_provider)
     unless manual_provider.is_a?(SSEProvider)
       raise ArgumentError, 'SSEClientTransport can only be used with SSEProvider'
     end
@@ -128,14 +128,14 @@ class SSEClientTransport
         ensure
           internet.close
         end
-      end.wait
+      end
     rescue => e
       @log.call("Error discovering tools from '#{manual_provider.name}': #{e}", error: true)
       return []
     end
   end
 
-  async def deregister_tool_provider(manual_provider)
+  def deregister_tool_provider(manual_provider)
     if @active_connections.key?(manual_provider.name)
       @log.call("Closing active SSE connection for provider '#{manual_provider.name}'")
       response, internet = @active_connections.delete(manual_provider.name)
@@ -145,7 +145,7 @@ class SSEClientTransport
     end
   end
 
-  async def call_tool(tool_name, arguments, tool_provider)
+  def call_tool(tool_name, arguments, tool_provider)
     unless tool_provider.is_a?(SSEProvider)
       raise ArgumentError, 'SSEClientTransport can only be used with SSEProvider'
     end
@@ -223,7 +223,7 @@ class SSEClientTransport
         @log.call("Error establishing SSE connection to '#{tool_provider.name}': #{e}", error: true)
         raise
       end
-    end.wait
+    end
   end
 
   # Synchronous enumerator to be used with Ruby's Enumerator or custom iteration.
@@ -291,7 +291,7 @@ class SSEClientTransport
     raise
   end
 
-  async def handle_oauth2(auth_details)
+  def handle_oauth2(auth_details)
     client_id = auth_details.client_id
     if @oauth_tokens.key?(client_id)
       return @oauth_tokens[client_id]['access_token']
@@ -345,10 +345,10 @@ class SSEClientTransport
       ensure
         internet.close
       end
-    end.wait
+    end
   end
 
-  async def close
+  def close
     @active_connections.keys.each do |provider_name|
       if @active_connections.key?(provider_name)
         response, internet = @active_connections.delete(provider_name)
