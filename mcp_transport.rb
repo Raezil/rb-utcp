@@ -7,25 +7,11 @@ require 'net/http'
 require 'uri'
 require_relative 'models'
 
-# Placeholder classes/modules: you need real equivalents or adapters in your codebase.
-# class StdioServerParameters; end
-# def stdio_client(params); end
-# def streamablehttp_client(url:, auth:); end
-# class ClientSession; end
-# class MCPProvider; end
-# class OAuth2Auth; end
-
 class MCPTransport
   def initialize(logger: nil)
     @oauth_tokens = {} # client_id => token hash
     @logger = logger || Logger.new($stdout)
   end
-
-  # Example usage:
-  #   provider = MCPProvider.new(name: 'example', config: {})
-  #   transport = MCPTransport.new
-  #   tools = transport.list_tools_with_session(provider.config)
-  #   result = transport.call_tool('echo', { message: 'hi' }, provider)
 
   def log(message, error: false)
     if error
@@ -35,9 +21,16 @@ class MCPTransport
     end
   end
 
+  # Helper to fetch from hash with indifferent access (symbol/string)
+  def fetch_key(hash, key)
+    return nil unless hash
+    hash[key] || hash[key.to_s]
+  end
+  private :fetch_key
+
   # Internal: list tools via a fresh session
   def list_tools_with_session(server_config, auth: nil)
-    transport = server_config[:transport] || server_config['transport']
+    transport = fetch_key(server_config, :transport)
 
     case transport
     when 'http'
@@ -47,7 +40,10 @@ class MCPTransport
         headers['Authorization'] = "Bearer #{token}"
       end
 
-      uri = URI(server_config[:url] || server_config['url'])
+      url = fetch_key(server_config, :url)
+      raise ArgumentError, "Missing URL in server config" unless url
+
+      uri = URI(url)
       http = Net::HTTP.new(uri.host, uri.port)
       http.use_ssl = uri.scheme == 'https'
       req = Net::HTTP::Get.new(uri)
@@ -55,7 +51,7 @@ class MCPTransport
 
       response = http.request(req)
       unless response.is_a?(Net::HTTPSuccess)
-        raise "HTTP error: #{response.code} #{response.body}"
+        raise "HTTP error when listing tools: #{response.code} #{response.body}"
       end
       data = JSON.parse(response.body)
       manual = UtcpManual.model_validate(data)
@@ -63,13 +59,13 @@ class MCPTransport
     when 'stdio'
       raise ArgumentError, 'stdio transport not implemented'
     else
-      raise ArgumentError, "Unsupported MCP transport: #{transport}"
+      raise ArgumentError, "Unsupported MCP transport: #{transport.inspect}"
     end
   end
 
   # Internal: call tool via a fresh session
   def call_tool_with_session(server_config, tool_name, inputs, auth: nil)
-    transport = server_config[:transport] || server_config['transport']
+    transport = fetch_key(server_config, :transport)
 
     case transport
     when 'http'
@@ -79,22 +75,28 @@ class MCPTransport
         headers['Authorization'] = "Bearer #{token}"
       end
 
-      uri = URI(server_config[:url] || server_config['url'])
+      url = fetch_key(server_config, :url)
+      raise ArgumentError, "Missing URL in server config" unless url
+
+      uri = URI(url)
       http = Net::HTTP.new(uri.host, uri.port)
       http.use_ssl = uri.scheme == 'https'
       req = Net::HTTP::Post.new(uri, headers)
-      req.body = JSON.generate(inputs || {})
+      # Some MCP endpoints expect tool name in path or body; assume body here
+      body_payload = inputs ? inputs.dup : {}
+      body_payload['tool'] = tool_name
+      req.body = JSON.generate(body_payload)
 
       response = http.request(req)
       unless response.is_a?(Net::HTTPSuccess)
-        raise "HTTP error: #{response.code} #{response.body}"
+        raise "HTTP error when calling tool '#{tool_name}': #{response.code} #{response.body}"
       end
 
       JSON.parse(response.body)
     when 'stdio'
       raise ArgumentError, 'stdio transport not implemented'
     else
-      raise ArgumentError, "Unsupported MCP transport: #{transport}"
+      raise ArgumentError, "Unsupported MCP transport: #{transport.inspect}"
     end
   end
 
@@ -102,13 +104,12 @@ class MCPTransport
   def register_tool_provider(manual_provider)
     all_tools = []
     if manual_provider.config
-      servers = manual_provider.config[:mcpServers] || manual_provider.config['mcpServers']
+      servers = fetch_key(manual_provider.config, :mcpServers)
       if servers
         servers.each do |server_name, server_config|
           begin
-            log("Discovering tools for server '#{server_name}' via #{server_config[:transport] || server_config['transport']}")
-            tools_task = list_tools_with_session(server_config, auth: manual_provider.auth)
-            tools = tools_task.is_a?(Async::Task) ? tools_task.wait : tools_task
+            log("Discovering tools for server '#{server_name}' via #{fetch_key(server_config, :transport)}")
+            tools = list_tools_with_session(server_config, auth: manual_provider.auth)
             log("Discovered #{tools.size} tools for server '#{server_name}'")
             all_tools.concat(tools)
           rescue => e
@@ -124,28 +125,31 @@ class MCPTransport
   def call_tool(tool_name, inputs, tool_provider)
     servers = nil
     if tool_provider.config
-      servers = tool_provider.config[:mcpServers] || tool_provider.config['mcpServers']
+      servers = fetch_key(tool_provider.config, :mcpServers)
     end
     unless servers
       raise ArgumentError, "No server configuration found for tool '#{tool_name}'"
     end
 
+    normalized_requested = normalize_tool_name(tool_name)
+
     servers.each do |server_name, server_config|
       begin
         log("Attempting to call tool '#{tool_name}' on server '#{server_name}'")
 
-        tools_task = list_tools_with_session(server_config, auth: tool_provider.auth)
-        tools = tools_task.is_a?(Async::Task) ? tools_task.wait : tools_task
-        tool_names = tools.map(&:name)
+        tools = list_tools_with_session(server_config, auth: tool_provider.auth)
+        tool_names = tools.map { |t| t.name }
 
-        unless tool_names.include?(tool_name)
-          log("Tool '#{tool_name}' not found in server '#{server_name}'")
+        # Accept exact match, suffix match (e.g., "provider.echo" vs "echo"), or last segment
+        matched_name = find_matching_tool_name(normalized_requested, tool_names)
+        unless matched_name
+          log("Tool '#{tool_name}' not found in server '#{server_name}' (available: #{tool_names.join(', ')})")
           next
         end
 
-        result_task = call_tool_with_session(server_config, tool_name, inputs, auth: tool_provider.auth)
-        result = result_task.is_a?(Async::Task) ? result_task.wait : result_task
-        return _process_tool_result(result, tool_name)
+        resolved_tool_name = matched_name
+        result = call_tool_with_session(server_config, resolved_tool_name, inputs, auth: tool_provider.auth)
+        return _process_tool_result(result, resolved_tool_name)
       rescue => e
         log("Error calling tool '#{tool_name}' on server '#{server_name}': #{e}", error: true)
         next
@@ -155,80 +159,86 @@ class MCPTransport
     raise ArgumentError, "Tool '#{tool_name}' not found in any configured server"
   end
 
+  # normalize e.g. "mcpdemo.echo" -> ["mcpdemo.echo", "echo"]
+  def normalize_tool_name(name)
+    return [] if name.nil?
+    parts = name.to_s.split('.')
+    variants = [name.to_s]
+    variants << parts.last if parts.size > 1
+    variants
+  end
+  private :normalize_tool_name
+
+  def find_matching_tool_name(requested_variants, available_names)
+    requested_variants.each do |variant|
+      return variant if available_names.include?(variant)
+    end
+    # case-insensitive fallback
+    available_names.find { |n| requested_variants.any? { |v| v.casecmp(n).zero? } }
+  end
+  private :find_matching_tool_name
+
   def _process_tool_result(result, tool_name)
-    log("Processing tool result for '#{tool_name}', type: #{result.class}")
+    log("Processing tool result for '#{tool_name}', raw result class: #{result.class}")
 
-    if result.respond_to?(:structured_output) && !result.structured_output.nil?
-      log("Found structured_output: #{result.structured_output}")
-      return result.structured_output
-    end
-
-    if result.respond_to?(:content) && !result.content.nil?
-      content = result.content
-      log("Content type: #{content.class}")
-
-      if content.is_a?(Array)
-        log("Content is a list with #{content.size} items")
-        return [] if content.empty?
-
-        if content.size == 1
-          item = content.first
-          if item.respond_to?(:text)
-            return parse_text_content(item.text)
-          end
-          return item
-        end
-
-        content.map do |item|
-          if item.respond_to?(:text)
-            parse_text_content(item.text)
-          else
-            item
-          end
-        end
-      elsif content.respond_to?(:text)
-        return parse_text_content(content.text)
-      elsif content.respond_to?(:json)
-        return content.json
-      else
-        return content
+    # If it's a hash with known structured keys, prioritize those.
+    if result.is_a?(Hash)
+      if result.key?('structured_output') && !result['structured_output'].nil?
+        log("Found structured_output in hash result")
+        return result['structured_output']
       end
+
+      if result.key?('content')
+        content = result['content']
+        case content
+        when Array
+          return content.map { |item| extract_textish(item) }
+        else
+          return extract_textish(content)
+        end
+      end
+
+      if result.key?('result')
+        return result['result']
+      end
+
+      return result
     end
 
-    if result.respond_to?(:result)
-      return result.result
-    end
-
-    result
+    # Fallback: scalar or other
+    extract_textish(result)
   end
   private :_process_tool_result
 
-  def parse_text_content(text)
-    return text if text.nil? || text.empty?
-    stripped = text.strip
+  def extract_textish(obj)
+    return obj if obj.nil?
 
-    # Try JSON
-    if (stripped.start_with?('{') && stripped.end_with?('}')) ||
-       (stripped.start_with?('[') && stripped.end_with?(']'))
-      begin
-        return JSON.parse(stripped)
-      rescue JSON::ParserError
-        # fall through
+    if obj.is_a?(String)
+      stripped = obj.strip
+      # Try parse JSON
+      if (stripped.start_with?('{') && stripped.end_with?('}')) ||
+         (stripped.start_with?('[') && stripped.end_with?(']'))
+        begin
+          return JSON.parse(stripped)
+        rescue JSON::ParserError
+          # fall through
+        end
       end
+
+      if stripped.match?(/\A-?\d+\z/)
+        return stripped.to_i
+      end
+
+      if stripped.match?(/\A-?\d+\.\d+\z/)
+        return stripped.to_f
+      end
+
+      return stripped
     end
 
-    # Try integer
-    if stripped.match?(/\A-?\d+\z/)
-      return stripped.to_i
-    end
-
-    # Try float
-    if stripped.match?(/\A-?\d+\.\d+\z/)
-      return stripped.to_f
-    end
-
-    stripped
+    obj
   end
+  private :extract_textish
 
   # No-op deregister
   def deregister_tool_provider(manual_provider)
