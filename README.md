@@ -93,3 +93,24 @@ ruby bin/utcp call examples/providers_extra.json cli_demo.shell_echo --args '{"m
 ruby bin/utcp call examples/providers_extra.json sock_demo.tcp_echo --args '{"name":"kamil"}'
 ruby bin/utcp call examples/providers_extra.json gql_demo.country_by_code --args '{"code":"DE"}'
 ```
+
+
+## MCP provider
+This adds a minimal HTTP-based MCP bridge.
+
+### Discovery
+Manual discovery expects the server to return a UTCP manual at `{url}/manual` (configurable via `discovery_path`). Point a manual provider to `"provider_type": "mcp"` in `providers.json` to fetch tools.
+
+### Calls
+Tools with `"provider_type": "mcp"` will POST to `{url}/call` with:
+```json
+{ "tool": "<name>", "arguments": { "...": "..." } }
+```
+If the response is `text/event-stream` we parse SSE and yield each `data:` line; otherwise we stream raw chunks when `--stream` is used.
+
+### Example
+```bash
+# assuming an MCP test server on http://localhost:8220/mcp
+ruby bin/utcp list examples/providers_mcp.json
+ruby bin/utcp call examples/providers_mcp.json mcp_demo.hello --args '{"name":"Kamil"}'
+```

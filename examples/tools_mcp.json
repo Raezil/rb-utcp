@@ -1,0 +1,17 @@
+{
+  "version": "1.0",
+  "tools": [
+    {
+      "name": "hello",
+      "description": "Call MCP server hello tool",
+      "inputs": { "type": "object", "properties": { "name": { "type": "string" } }, "required": ["name"] },
+      "outputs": { "type": "object" },
+      "tags": ["mcp", "demo"],
+      "tool_provider": {
+        "provider_type": "mcp",
+        "url": "http://localhost:8220/mcp",
+        "call_path": "/call"
+      }
+    }
+  ]
+}

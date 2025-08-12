@@ -47,6 +47,8 @@ module Utcp
       tools = case type
       when "http"
         HttpProvider.new(name: name, url: prov["url"] || prov[:url], http_method: prov["http_method"] || prov[:http_method] || "GET", content_type: prov["content_type"] || "application/json", headers: prov["headers"] || {}, manual: true, auth: auth).discover_tools!
+      when "mcp"
+        Providers::McpProvider.new(name: name, url: prov["url"] || prov[:url], headers: prov["headers"] || {}, auth: auth, manual: true, discovery_path: prov["discovery_path"] || "/manual").discover_tools!
       when "text"
         manual_path = prov["file_path"] || prov[:file_path]
         raise ConfigError, "text provider missing file_path" unless manual_path && File.file?(manual_path)
