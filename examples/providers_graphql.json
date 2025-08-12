@@ -1,7 +1,0 @@
-[
-  {
-    "name": "graphqldemo",
-    "provider_type": "graphql",
-    "url": "http://localhost:4570/graphql"
-  }
-]

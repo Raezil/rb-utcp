@@ -1,0 +1,6 @@
+[
+  { "name": "ws_demo", "provider_type": "text", "file_path": "examples/tools_ws.json" },
+  { "name": "cli_demo", "provider_type": "text", "file_path": "examples/tools_cli.json" },
+  { "name": "sock_demo", "provider_type": "text", "file_path": "examples/tools_tcp_udp.json" },
+  { "name": "gql_demo", "provider_type": "text", "file_path": "examples/tools_graphql.json" }
+]

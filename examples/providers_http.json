@@ -1,9 +1,0 @@
-[
-  {
-    "name": "httpdemo",
-    "provider_type": "http",
-    "url": "http://localhost:4567/echo",
-    "http_method": "POST",
-    "content_type": "application/json"
-  }
-]

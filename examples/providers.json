@@ -1,7 +1,7 @@
 [
   {
-    "name": "example",
+    "name": "local_examples",
     "provider_type": "text",
-    "file_path": "echo_tool.json"
+    "file_path": "examples/tools_weather.json"
   }
 ]

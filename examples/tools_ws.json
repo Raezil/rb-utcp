@@ -1,0 +1,19 @@
+{
+  "version": "1.0",
+  "tools": [
+    {
+      "name": "ws_echo",
+      "description": "Echo a message over a public WebSocket echo server",
+      "inputs": { "type": "object", "properties": { "text": { "type": "string" } }, "required": ["text"] },
+      "outputs": { "type": "array", "items": { "type": "string" } },
+      "tags": ["websocket", "echo", "demo"],
+      "tool_provider": {
+        "provider_type": "websocket",
+        "url": "wss://echo.websocket.events",
+        "message_template": "UTCP says: ${text}",
+        "close_after_ms": 3000,
+        "max_frames": 2
+      }
+    }
+  ]
+}

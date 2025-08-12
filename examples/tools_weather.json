@@ -1,0 +1,31 @@
+{
+  "version": "1.0",
+  "tools": [
+    {
+      "name": "echo",
+      "description": "Echo message via httpbin.org (POST JSON)",
+      "inputs": { "type": "object", "properties": { "message": { "type": "string" } }, "required": ["message"] },
+      "outputs": { "type": "object" },
+      "tags": ["echo", "httpbin", "demo"],
+      "tool_provider": {
+        "provider_type": "http",
+        "url": "https://httpbin.org/post",
+        "http_method": "POST",
+        "content_type": "application/json",
+        "headers": { "X-Demo": "ruby-utcp" }
+      }
+    },
+    {
+      "name": "stream_http",
+      "description": "Stream 20 JSON lines using chunked transfer",
+      "inputs": { "type": "object", "properties": {}, "required": [] },
+      "outputs": { "type": "string" },
+      "tags": ["stream", "http"],
+      "tool_provider": {
+        "provider_type": "http_stream",
+        "url": "https://httpbin.org/stream/20",
+        "http_method": "GET"
+      }
+    }
+  ]
+}

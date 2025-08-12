@@ -1,28 +1,95 @@
-# rb-utcp
+# ruby-utcp (alpha)
 
-This project contains a minimal Ruby implementation of an experimental UTCP client.
-It provides several transport implementations and a basic client that can load
-provider definitions from JSON files.
+A small, dependency-light Ruby implementation of the **Universal Tool Calling Protocol (UTCP)**.
+It mirrors the core models — **Manual**, **Tool**, **Providers**, and **Auth** — and lets you
+discover tools and call them over HTTP, SSE, and HTTP chunked streams.
 
-## Running the example
+> Status: early alpha, but usable for simple demos. Standard library only.
 
+## Features
+- Load one or more "manual providers" from `providers.json` (HTTP or local file).
+- Store discovered tools in an in-memory repository.
+- Call tools via HTTP (`GET/POST/PUT/PATCH/DELETE`), SSE, or HTTP chunked streaming.
+- API Key, Basic, and OAuth2 Client Credentials auth (token cached in memory).
+- Simple variable substitution for `${VAR}` using values from environment and `.env` files.
+- Tiny search helper scoring tags + description to find relevant tools.
+
+## Install
+This is a vanilla Ruby project. No external gems are required.
+```bash
+ruby -v   # Ruby 3.x recommended
 ```
-cd examples
-ruby run.rb
+
+## Quickstart
+```bash
+# 1) Unzip, cd in
+cd ruby-utcp
+
+# 2) (Optional) create a .env file with secrets
+echo 'OPEN_WEATHER_API_KEY=replace-me' > .env
+
+# 3) Run the example (uses httpbin.org)
+ruby examples/basic_call.rb
 ```
 
-The example registers a text provider defined in `providers.json` and calls the
-`echo` tool from `echo_tool.json`.
+## Layout
+```
+lib/utcp.rb
+lib/utcp/version.rb
+lib/utcp/client.rb
+lib/utcp/tool.rb
+lib/utcp/errors.rb
+lib/utcp/utils/env_loader.rb
+lib/utcp/utils/subst.rb
+lib/utcp/auth.rb
+lib/utcp/tool_repository.rb
+lib/utcp/search.rb
+lib/utcp/providers/base_provider.rb
+lib/utcp/providers/http_provider.rb
+lib/utcp/providers/sse_provider.rb
+lib/utcp/providers/http_stream_provider.rb
+bin/utcp
+examples/providers.json
+examples/tools_weather.json
+examples/basic_call.rb
+```
 
-## Transport Examples
+## Example manual (local file)
+See `examples/tools_weather.json` for a minimal UTCP manual that exposes two tools:
+- `echo` (POST JSON to httpbin.org)
+- `stream_http` (stream 20 JSON lines from httpbin.org)
 
-Additional example scripts are available under `examples/` for other transports. These include small mock servers and a CLI to demonstrate usage:
+## CLI
+```bash
+# List all discovered tools
+ruby bin/utcp list examples/providers.json
 
-- `mock_http_server.rb` with `run_http.rb`
-- `mock_sse_server.rb` with `run_sse.rb`
-- `mock_http_stream_server.rb` with `run_stream.rb`
-- `mock_cli.rb` with `run_cli.rb`
-- `mock_graphql_server.rb` with `run_graphql.rb`
-- `mock_mcp_server.rb` with `run_mcp.rb`
+# Call a tool (args as JSON)
+ruby bin/utcp call examples/providers.json echo --args '{"message":"hello"}'
+```
 
-Start the corresponding mock server (or CLI) and run the matching `run_*.rb` script from the `examples` directory.
+## License
+MPL-2.0
+
+
+## New transports (alpha)
+- **WebSocket**: minimal RFC6455 text-only client; great for echo/testing.
+- **GraphQL**: POST query + variables to any GraphQL endpoint.
+- **TCP/UDP**: raw sockets with simple `${var}` templating; includes local echo servers under `examples/dev/`.
+- **CLI**: call local commands (use carefully!).
+
+### Try them
+Start local echo servers (optional, for TCP/UDP):
+```bash
+ruby examples/dev/echo_tcp_server.rb 5001
+ruby examples/dev/echo_udp_server.rb 5002
+```
+
+Use the extra providers file:
+```bash
+ruby bin/utcp list examples/providers_extra.json
+ruby bin/utcp call examples/providers_extra.json ws_demo.ws_echo --args '{"text":"hello ws"}' --stream
+ruby bin/utcp call examples/providers_extra.json cli_demo.shell_echo --args '{"msg":"hi from shell"}'
+ruby bin/utcp call examples/providers_extra.json sock_demo.tcp_echo --args '{"name":"kamil"}'
+ruby bin/utcp call examples/providers_extra.json gql_demo.country_by_code --args '{"code":"DE"}'
+```

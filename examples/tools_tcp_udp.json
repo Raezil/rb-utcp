@@ -1,0 +1,35 @@
+{
+  "version": "1.0",
+  "tools": [
+    {
+      "name": "tcp_echo",
+      "description": "Send a line to local TCP echo server and read one line back",
+      "inputs": { "type": "object", "properties": { "name": { "type": "string" } }, "required": ["name"] },
+      "outputs": { "type": "string" },
+      "tags": ["tcp", "echo"],
+      "tool_provider": {
+        "provider_type": "tcp",
+        "host": "127.0.0.1",
+        "port": 5001,
+        "message_template": "hello ${name}\n",
+        "read_until": "\n",
+        "timeout_ms": 3000
+      }
+    },
+    {
+      "name": "udp_ping",
+      "description": "Send one UDP datagram to local UDP echo server and await reply",
+      "inputs": { "type": "object", "properties": { "who": { "type": "string" } }, "required": ["who"] },
+      "outputs": { "type": "string" },
+      "tags": ["udp", "echo"],
+      "tool_provider": {
+        "provider_type": "udp",
+        "host": "127.0.0.1",
+        "port": 5002,
+        "message_template": "ping ${who}",
+        "timeout_ms": 1000,
+        "max_bytes": 2048
+      }
+    }
+  ]
+}
