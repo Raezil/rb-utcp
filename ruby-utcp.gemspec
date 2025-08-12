@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 Gem::Specification.new do |s|
-  s.name        = "ruby-utcp"
+  s.name        = "rb-utcp"
   s.version     = "0.1.0"
   s.summary     = "Universal Tool Calling Protocol (Ruby, alpha)"
   s.description = "Minimal Ruby implementation of UTCP with HTTP/SSE/HTTP-stream transports."
