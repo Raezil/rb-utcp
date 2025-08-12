@@ -196,7 +196,7 @@ module Utcp
         frame = [0x88, 0x80, 0x00, 0x00, 0x00, 0x00].pack("C*") # masked empty close
         sock.write(frame) rescue nil
       end
-
+      
       def read_bytes(sock, n, deadline)
         buf = +"".b
         while buf.bytesize < n
@@ -204,11 +204,19 @@ module Utcp
           return nil if timeout <= 0
           ready = IO.select([sock], nil, nil, timeout)
           return nil unless ready
-          chunk = sock.readpartial(n - buf.bytesize) rescue return nil
+
+          begin
+            chunk = sock.readpartial(n - buf.bytesize)
+          rescue EOFError, IOError, SystemCallError
+            return nil
+          end
+
+          return nil if chunk.nil? || chunk.empty?
           buf << chunk
         end
         buf
       end
+
     end
   end
 end

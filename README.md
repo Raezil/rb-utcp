@@ -114,3 +114,16 @@ If the response is `text/event-stream` we parse SSE and yield each `data:` line;
 ruby bin/utcp list examples/providers_mcp.json
 ruby bin/utcp call examples/providers_mcp.json mcp_demo.hello --args '{"name":"Kamil"}'
 ```
+
+
+## Tests
+This project uses **Minitest** (stdlib only).
+
+Run all tests:
+```bash
+ruby bin/test
+```
+or
+```bash
+ruby -Ilib -Itest -rminitest/autorun test/*_test.rb
+```
