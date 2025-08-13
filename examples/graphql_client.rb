@@ -5,6 +5,7 @@
 # Usage:
 #   ruby examples/graphql_client.rb http://127.0.0.1:PORT/graphql
 
+$LOAD_PATH.unshift(File.expand_path('../lib', __dir__))
 require 'utcp'
 
 url = ARGV[0] or abort("Usage: ruby examples/graphql_client.rb http://127.0.0.1:PORT/graphql")

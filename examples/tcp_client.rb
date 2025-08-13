@@ -5,6 +5,7 @@
 # Usage:
 #   ruby examples/tcp_client.rb PORT
 
+$LOAD_PATH.unshift(File.expand_path('../lib', __dir__))
 require 'utcp'
 
 port = Integer(ARGV[0]) rescue abort("Usage: ruby examples/tcp_client.rb PORT")

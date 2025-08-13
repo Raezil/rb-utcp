@@ -5,6 +5,7 @@
 # Usage:
 #   ruby examples/mcp_client.rb http://127.0.0.1:PORT
 
+$LOAD_PATH.unshift(File.expand_path('../lib', __dir__))
 require 'utcp'
 require 'json'
 
