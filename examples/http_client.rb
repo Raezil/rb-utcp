@@ -22,7 +22,7 @@ res = client.call_tool('srv.echo', { 'message' => 'hi' })
 puts res.inspect
 
 puts 'HTTP stream ->'
-client.call_tool('srv.stream') { |chunk| puts "  #{chunk}" }
+client.call_tool('srv.stream', {}, stream: true) { |chunk| puts "  #{chunk}" }
 
 puts 'SSE stream ->'
 client.call_tool('srv.sse') { |event| puts "  #{event}" }

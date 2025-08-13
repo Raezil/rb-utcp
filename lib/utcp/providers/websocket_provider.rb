@@ -32,9 +32,13 @@ module Utcp
         uri = URI(Utils::Subst.apply(p["url"]))
         raise ConfigError, "WebSocket requires ws:// or wss:// URL" unless %w[ws wss].include?(uri.scheme)
 
+        headers = Utils::Subst.apply(p["headers"] || {}).transform_keys(&:to_s)
+        @auth&.apply_query(uri) if @auth&.respond_to?(:apply_query)
+        @auth&.apply_headers(headers)
+
         sock = connect_socket(uri)
         begin
-          handshake(sock, uri)
+          handshake(sock, uri, headers)
           # Compose a text message to send
           payload = compose_payload(p, arguments)
           if payload
@@ -94,20 +98,23 @@ module Utcp
         end
       end
 
-      def handshake(sock, uri)
+      def handshake(sock, uri, extra_headers = {})
         key = Base64.strict_encode64(Random.new.bytes(16))
         path = uri.request_uri
         host = uri.host
-        headers = [
+        host += ":#{uri.port}" if uri.port && uri.port != (uri.scheme == "wss" ? 443 : 80)
+        header_lines = [
           "GET #{path} HTTP/1.1",
           "Host: #{host}",
           "Upgrade: websocket",
           "Connection: Upgrade",
           "Sec-WebSocket-Key: #{key}",
           "Sec-WebSocket-Version: 13",
-          "", ""
-        ].join("\r\n")
-        sock.write(headers)
+        ]
+        extra_headers.each { |k, v| header_lines << "#{k}: #{v}" }
+        header_lines << "" << ""
+        sock.write(header_lines.join("\r\n"))
+        sock.flush if sock.respond_to?(:flush)
 
         status_line = sock.gets("\r\n") || ""
         unless status_line.start_with?("HTTP/1.1 101")

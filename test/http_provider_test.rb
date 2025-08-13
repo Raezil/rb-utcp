@@ -34,7 +34,7 @@ class HttpProviderTest < Minitest::Test
           "inputs" => { "type"=>"object" },
           "outputs" => { "type"=>"string" },
           "tool_provider" => {
-            "provider_type" => "http_stream",
+            "provider_type" => "http",
             "url" => nil # fill with /stream
           }
         },

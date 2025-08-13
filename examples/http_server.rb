@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-# Minimal HTTP server demonstrating UTCP HTTP, HTTP stream and SSE providers.
+# Minimal HTTP server demonstrating UTCP HTTP (including chunked streaming) and SSE providers.
 # Run with:
 #   ruby examples/http_server.rb
 # The server prints its base URL on startup and exposes the following endpoints:
@@ -34,7 +34,7 @@ manual = {
       'inputs' => { 'type' => 'object' },
       'outputs' => { 'type' => 'string' },
       'tool_provider' => {
-        'provider_type' => 'http_stream',
+        'provider_type' => 'http',
         'url' => nil
       }
     },

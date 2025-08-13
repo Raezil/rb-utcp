@@ -79,12 +79,21 @@ module Utcp
 
         http = Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https")
         begin
-          res = http.request(req)
-          # try to parse as JSON; fall back to raw string
-          begin
-            JSON.parse(res.body)
-          rescue
-            res.body
+          if block_given?
+            http.request(req) do |res|
+              res.read_body do |chunk|
+                yield chunk
+              end
+            end
+            nil
+          else
+            res = http.request(req)
+            # try to parse as JSON; fall back to raw string
+            begin
+              JSON.parse(res.body)
+            rescue
+              res.body
+            end
           end
         ensure
           http.finish if http.active?
