@@ -35,18 +35,36 @@ module Utcp
         @auth&.apply_headers(headers)
         headers.each { |k, v| req[k] = v }
 
-        http = Net::HTTP.start(uri.host, uri.port, use_ssl: uri.scheme == "https")
+        http = Net::HTTP.start(
+          uri.host, uri.port,
+          use_ssl: uri.scheme == "https"
+        )
+        http.read_timeout = nil
+        http.open_timeout = 5
+
         begin
           http.request(req) do |res|
-            res.read_body do |chunk|
-              yield chunk if block_given?
+            begin
+              res.read_body do |chunk|
+                yield chunk if block_given?
+              end
+            rescue EOFError
+              warn "[HttpStreamProvider] EOFError during chunk read — treating as normal stream end"
+            rescue IOError
+              warn "[HttpStreamProvider] IOError during chunk read — treating as normal stream end"
             end
           end
-          nil
+        rescue EOFError
+          warn "[HttpStreamProvider] EOFError before body read — treating as end of stream"
+        rescue IOError
+          warn "[HttpStreamProvider] IOError before body read — treating as end of stream"
         ensure
-          http.finish if http.active?
+          http.finish if http&.active?
         end
+
+        nil
       end
+
     end
   end
 end
