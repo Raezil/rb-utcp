@@ -98,7 +98,12 @@ module Utcp
           auth: auth,
           body_field: p["body_field"]
         )
-        exec.call_tool(t, arguments)
+        if stream
+          raise ConfigError, "Streaming requires a block for HTTP" unless block_given?
+          exec.call_tool(t, arguments, &block)
+        else
+          exec.call_tool(t, arguments)
+        end
 
       when "sse"
         raise ConfigError, "Streaming requires a block for SSE" if stream && !block_given?
