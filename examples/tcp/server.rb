@@ -15,6 +15,7 @@ trap('INT') { server.close; exit }
 loop do
   sock = server.accept
   Thread.new(sock) do |s|
+    s.sync = true
     begin
       while (line = s.gets)
         s.write(line)

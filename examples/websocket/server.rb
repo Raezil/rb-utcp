@@ -21,7 +21,7 @@ loop do
   sock = server.accept
   Thread.new(sock) do |s|
     # Read HTTP handshake
-    request = ""
+    request = String.new
     while (line = s.gets)
       request << line
       break if line == "\r\n"

@@ -34,7 +34,7 @@ manual = {
       'inputs' => { 'type' => 'object' },
       'outputs' => { 'type' => 'string' },
       'tool_provider' => {
-        'provider_type' => 'http',
+        'provider_type' => 'http_stream',
         'url' => nil
       }
     },
