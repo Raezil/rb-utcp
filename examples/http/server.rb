@@ -74,7 +74,7 @@ server.mount_proc '/stream' do |_req, res|
   res.chunked = true
   res.body = Enumerator.new do |y|
     [{ 'a' => 1 }, { 'b' => 2 }, { 'c' => 3 }].each do |obj|
-      y << JSON.dump(obj)
+      y << JSON.dump(obj) + "\n"
       sleep 0.2
     end
   end
@@ -85,7 +85,7 @@ server.mount_proc '/sse' do |_req, res|
   res.chunked = true
   res.body = Enumerator.new do |y|
     3.times do |i|
-      y << "data: event-#{i}\n\n"
+      y << "data: event-#{i}\r\n\r\n"
       sleep 0.2
     end
   end

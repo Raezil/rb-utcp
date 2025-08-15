@@ -42,7 +42,7 @@ module Utcp
             begin
               res.read_body do |chunk|
                 buffer << chunk
-                while (line = buffer.slice!(/.*?\n/))
+                while (line = buffer.slice!(/.*?\r?\n/))
                   line = line.strip
                   next if line.empty? || line.start_with?(":")
                   if line.start_with?("data:")
