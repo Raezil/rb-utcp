@@ -49,15 +49,15 @@ module Utcp
                 yield chunk if block_given?
               end
             rescue EOFError
-              warn "[HttpStreamProvider] EOFError during chunk read — treating as normal stream end"
+              warn "[HttpStreamProvider] EOFError during chunk read — treating as normal stream end" if ENV["UTCP_DEBUG"]
             rescue IOError
-              warn "[HttpStreamProvider] IOError during chunk read — treating as normal stream end"
+              warn "[HttpStreamProvider] IOError during chunk read — treating as normal stream end" if ENV["UTCP_DEBUG"]
             end
           end
         rescue EOFError
-          warn "[HttpStreamProvider] EOFError before body read — treating as end of stream"
+          warn "[HttpStreamProvider] EOFError before body read — treating as end of stream" if ENV["UTCP_DEBUG"]
         rescue IOError
-          warn "[HttpStreamProvider] IOError before body read — treating as end of stream"
+          warn "[HttpStreamProvider] IOError before body read — treating as end of stream" if ENV["UTCP_DEBUG"]
         ensure
           http.finish if http&.active?
         end

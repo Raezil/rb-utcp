@@ -3,7 +3,7 @@
 
 # Simple TCP echo server for the UTCP TCP provider.
 # Run with:
-#   ruby examples/tcp_echo_server.rb
+#   ruby examples/tcp/server.rb
 
 require 'socket'
 
@@ -15,6 +15,7 @@ trap('INT') { server.close; exit }
 loop do
   sock = server.accept
   Thread.new(sock) do |s|
+    s.sync = true
     begin
       while (line = s.gets)
         s.write(line)

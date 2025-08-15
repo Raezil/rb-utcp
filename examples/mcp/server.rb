@@ -3,7 +3,7 @@
 
 # Minimal MCP server for the UTCP MCP provider.
 # Run with:
-#   ruby examples/mcp_server.rb
+#   ruby examples/mcp/server.rb
 
 require 'webrick'
 require 'json'

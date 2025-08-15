@@ -3,7 +3,7 @@
 
 # Minimal HTTP server demonstrating UTCP HTTP (including chunked streaming) and SSE providers.
 # Run with:
-#   ruby examples/http_server.rb
+#   ruby examples/http/server.rb
 # The server prints its base URL on startup and exposes the following endpoints:
 #   /manual - UTCP manual with tool definitions
 #   /call   - echo tool using HTTP POST
@@ -34,7 +34,7 @@ manual = {
       'inputs' => { 'type' => 'object' },
       'outputs' => { 'type' => 'string' },
       'tool_provider' => {
-        'provider_type' => 'http',
+        'provider_type' => 'http_stream',
         'url' => nil
       }
     },
@@ -74,7 +74,7 @@ server.mount_proc '/stream' do |_req, res|
   res.chunked = true
   res.body = Enumerator.new do |y|
     [{ 'a' => 1 }, { 'b' => 2 }, { 'c' => 3 }].each do |obj|
-      y << JSON.dump(obj)
+      y << JSON.dump(obj) + "\n"
       sleep 0.2
     end
   end
@@ -85,7 +85,7 @@ server.mount_proc '/sse' do |_req, res|
   res.chunked = true
   res.body = Enumerator.new do |y|
     3.times do |i|
-      y << "data: event-#{i}\n\n"
+      y << "data: event-#{i}\r\n\r\n"
       sleep 0.2
     end
   end

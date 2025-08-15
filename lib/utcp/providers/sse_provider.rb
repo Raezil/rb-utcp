@@ -39,22 +39,39 @@ module Utcp
         begin
           buffer = +""
           http.request(req) do |res|
-            res.read_body do |chunk|
-              buffer << chunk
-              while (line = buffer.slice!(/.*\n/))
-                line = line.strip
-                next if line.empty? || line.start_with?(":")
+            begin
+              res.read_body do |chunk|
+                buffer << chunk
+                while (line = buffer.slice!(/.*?\r?\n/))
+                  line = line.strip
+                  next if line.empty? || line.start_with?(":")
+                  if line.start_with?("data:")
+                    data = line.sub(/^data:\s?/, "")
+                    yield data if block_given?
+                  end
+                end
+              end
+              unless buffer.empty?
+                line = buffer.strip
                 if line.start_with?("data:")
                   data = line.sub(/^data:\s?/, "")
                   yield data if block_given?
                 end
               end
+            rescue EOFError
+              warn "[SseProvider] EOFError during chunk read — treating as normal stream end" if ENV["UTCP_DEBUG"]
+            rescue IOError
+              warn "[SseProvider] IOError during chunk read — treating as normal stream end" if ENV["UTCP_DEBUG"]
             end
           end
-          nil
+        rescue EOFError
+          warn "[SseProvider] EOFError before body read — treating as end of stream" if ENV["UTCP_DEBUG"]
+        rescue IOError
+          warn "[SseProvider] IOError before body read — treating as end of stream" if ENV["UTCP_DEBUG"]
         ensure
           http.finish if http.active?
         end
+        nil
       end
     end
   end

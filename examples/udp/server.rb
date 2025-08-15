@@ -3,7 +3,7 @@
 
 # Simple UDP echo server for the UTCP UDP provider.
 # Run with:
-#   ruby examples/udp_echo_server.rb
+#   ruby examples/udp/server.rb
 
 require 'socket'
 
