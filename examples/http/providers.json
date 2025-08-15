@@ -1,0 +1,8 @@
+[
+  {
+    "name": "srv",
+    "provider_type": "http",
+    "url": "/manual",
+    "http_method": "GET"
+  }
+]

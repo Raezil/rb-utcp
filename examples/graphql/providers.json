@@ -1,0 +1,8 @@
+[
+  {
+    "name": "gql",
+    "provider_type": "graphql",
+    "url": "",
+    "query": "query($name:String!){ greeting(name:$name) }"
+  }
+]

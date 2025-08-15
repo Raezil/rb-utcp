@@ -3,7 +3,7 @@
 
 # Minimal WebSocket echo server for the UTCP WebSocket provider.
 # Run with:
-#   ruby examples/websocket_server.rb
+#   ruby examples/websocket/server.rb
 # The server prints its ws:// URL and echoes the first text frame it receives.
 
 require 'socket'

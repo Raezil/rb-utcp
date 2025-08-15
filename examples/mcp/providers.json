@@ -1,0 +1,8 @@
+[
+  {
+    "name": "srv",
+    "provider_type": "mcp",
+    "url": "",
+    "discovery_path": "/manual"
+  }
+]

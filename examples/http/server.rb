@@ -3,7 +3,7 @@
 
 # Minimal HTTP server demonstrating UTCP HTTP (including chunked streaming) and SSE providers.
 # Run with:
-#   ruby examples/http_server.rb
+#   ruby examples/http/server.rb
 # The server prints its base URL on startup and exposes the following endpoints:
 #   /manual - UTCP manual with tool definitions
 #   /call   - echo tool using HTTP POST

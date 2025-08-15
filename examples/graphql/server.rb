@@ -4,7 +4,7 @@
 # Real GraphQL HTTP server for the UTCP GraphQL provider.
 # Run with:
 #   gem install graphql
-#   ruby examples/graphql_server.rb
+#   ruby examples/graphql/server.rb
 
 require 'webrick'
 require 'json'

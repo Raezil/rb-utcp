@@ -3,7 +3,7 @@
 
 # Simple TCP echo server for the UTCP TCP provider.
 # Run with:
-#   ruby examples/tcp_echo_server.rb
+#   ruby examples/tcp/server.rb
 
 require 'socket'
 
